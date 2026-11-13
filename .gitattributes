@@ -1,0 +1,4 @@
+# Go 源码强制 LF：gofmt 会将 CRLF 文件判为未格式化，
+# 而 GitHub Windows runner 默认 core.autocrlf=true，检出时会把 LF 转 CRLF，
+# 导致 gofmt 门禁在 windows-latest 全量误报。此处声明优先级高于 runner 的 autocrlf。
+*.go text eol=lf
