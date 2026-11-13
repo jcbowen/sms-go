@@ -1,0 +1,125 @@
+{
+	"version": "2.0.0",
+	"inputs": [
+		{
+			"id": "releaseVersion",
+			"type": "promptString",
+			"description": "发布版本号（留空 = 运行时交互选择，↑/↓ 选 patch/minor/major；正式版 0.1.0；预发布 0.1.0-alpha / -beta / -rc.1，v 前缀可不带）",
+			"default": "",
+			"password": false
+		},
+		{
+			"id": "releaseMode",
+			"type": "pickString",
+			"description": "发版方式：默认只在本地创建 vX.Y.Z 轻量 tag",
+			"default": "",
+			"options": [
+				{
+					"label": "仅创建本地 tag（默认，不推送）",
+					"value": ""
+				},
+				{
+					"label": "创建并推送 tag 到 origin（推送即发布）",
+					"value": " --push"
+				}
+			]
+		},
+		{
+			"id": "skipTest",
+			"type": "pickString",
+			"description": "门禁是否跳过 go test（gofmt/build/vet 仍执行）",
+			"default": "",
+			"options": [
+				{
+					"label": "完整门禁（含 go test -race，默认）",
+					"value": ""
+				},
+				{
+					"label": "跳过 go test（--skip-test，只跑 gofmt/build/vet）",
+					"value": " --skip-test"
+				}
+			]
+		}
+	],
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "发布（先跑门禁，再打 v tag）",
+			"command": "node scripts/release.mjs ${input:releaseVersion}${input:skipTest}${input:releaseMode}",
+			"problemMatcher": [],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"detail": "门禁链（gofmt → build → vet → test -race，--skip-test 可跳过测试）→ 必要性探测（最新 tag 与 HEAD 无变更即退出，--force 可强制；工作区不干净拒绝发版）→ 创建 vX.Y.Z 轻量 tag；版本留空时终端 ↑/↓ 选择候选；默认不推送，选「创建并推送」才推 origin（推送即发布，CI 三平台复验）；中断后同一版本号重跑加 --resume 续跑"
+		},
+		{
+			"type": "shell",
+			"label": "检查门禁（--check）",
+			"command": "node scripts/release.mjs --check",
+			"problemMatcher": [],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"detail": "只跑门禁（gofmt → build → vet → test -race，与 CI 同口径），不探测、不建 tag"
+		},
+		{
+			"type": "shell",
+			"label": "运行 Go 测试",
+			"command": "go test -race ./...",
+			"problemMatcher": [
+				"$go"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"detail": "全量测试（含竞态检测），所有用例均不发起真实网络请求"
+		},
+		{
+			"type": "shell",
+			"label": "格式化 Go（自动修复）",
+			"command": "gofmt -w .",
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"detail": "gofmt -w . 全仓自动修复（跨平台，无需 node）"
+		},
+		{
+			"type": "shell",
+			"label": "格式化 Go（只检查）",
+			"command": "gofmt -l .",
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"detail": "CI 同款 gofmt 闸门：列出未格式化文件，输出非空即未通过"
+		}
+	]
+}

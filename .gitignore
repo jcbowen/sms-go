@@ -17,6 +17,6 @@ coverage.html
 
 # 编辑器 / 系统
 .idea/
-.vscode/
+# .vscode/
 .DS_Store
 Thumbs.db
