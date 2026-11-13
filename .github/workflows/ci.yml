@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+    # 发版 tag 推送触发检测（对齐 license-cloud：tag 即发布，推送时全平台复验）
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: gofmt 格式检查
+        # 与本地 scripts/release.mjs 门禁同口径：任何未格式化文件即失败，
+        # 提前于编译暴露格式问题
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "以下文件未通过 gofmt 格式检查："
+            echo "$unformatted"
+            exit 1
+          fi
+      - name: 编译
+        run: go build ./...
+      - name: 静态检查
+        run: go vet ./...
+      - name: 单元测试
+        run: go test -race ./...
