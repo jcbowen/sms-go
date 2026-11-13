@@ -25,7 +25,9 @@ jobs:
           cache: true
       - name: gofmt 格式检查
         # 与本地 scripts/release.mjs 门禁同口径：任何未格式化文件即失败，
-        # 提前于编译暴露格式问题
+        # 提前于编译暴露格式问题；shell: bash 三平台统一（windows-latest
+        # 多行脚本默认是 pwsh，bash 语法会报 ParserError）
+        shell: bash
         run: |
           unformatted=$(gofmt -l .)
           if [ -n "$unformatted" ]; then
