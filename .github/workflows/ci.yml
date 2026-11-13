@@ -18,11 +18,12 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-          cache: true
+          # 纯标准库项目无 go.sum，开启缓存会在恢复阶段报错且无意义
+          cache: false
       - name: gofmt 格式检查
         # 与本地 scripts/release.mjs 门禁同口径：任何未格式化文件即失败，
         # 提前于编译暴露格式问题；shell: bash 三平台统一（windows-latest
